@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Speexx Mega Menu (Avada-free)
+ * Plugin Name: Speexaax Mega Menu (Avada-free)
  * Description: Adds a simple mega menu option to WordPress menus and provides a walker + CSS to render it without Avada.
  * Version: 1.1.0
  * Author: Speexx
