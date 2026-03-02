@@ -5,10 +5,9 @@
     display: flex;
     gap: 1rem;
     align-items: center;
-    position: relative;
 }
 
-.ultra-menu > li {
+.ultra-menu li {
     position: relative;
 }
 
@@ -50,39 +49,28 @@
     padding: 0.5rem 1rem;
 }
 
-.ultra-menu > li.is-mega {
+.ultra-menu li.is-mega {
     position: static;
 }
 
-.ultra-menu > li.is-mega > .sub-menu {
+.ultra-menu li.is-mega > .sub-menu {
     left: 0;
     right: 0;
     width: 100%;
-    min-width: 100%;
     max-width: 100%;
-    padding: 1.25rem;
+    padding: 1rem;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
 }
 
-.ultra-menu > li.is-mega > .sub-menu > li {
-    border-right: 1px solid #efefef;
-    padding-right: 1rem;
-}
-
-.ultra-menu > li.is-mega > .sub-menu > li:last-child {
-    border-right: 0;
-}
-
-.ultra-menu > li.is-mega > .sub-menu > li > a {
-    font-weight: 700;
+.ultra-menu li.is-mega > .sub-menu > li > a {
+    font-weight: 600;
     border-bottom: 1px solid #e4e4e4;
     margin-bottom: 0.5rem;
-    padding: 0 0 0.5rem;
 }
 
-.ultra-menu > li.is-mega > .sub-menu > li > .sub-menu {
+.ultra-menu li.is-mega > .sub-menu > li > .sub-menu {
     position: static;
     box-shadow: none;
     visibility: visible;
@@ -90,25 +78,21 @@
     transform: none;
     padding: 0;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
 }
 
-.ultra-menu > li.is-mega > .sub-menu > li > .sub-menu a {
+.ultra-menu li.is-mega > .sub-menu > li > .sub-menu a {
     padding: 0.4rem 0;
 }
 
 .ultra-menu .ultra-menu-item-extra {
-    display: grid;
-    grid-template-columns: 44px 1fr;
+    display: inline-flex;
     gap: 0.65rem;
     align-items: center;
 }
 
 .ultra-menu .ultra-menu-item-image img {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     object-fit: cover;
     border-radius: 4px;
 }
@@ -127,20 +111,14 @@
     }
 
     .ultra-menu .sub-menu,
-    .ultra-menu > li.is-mega > .sub-menu {
+    .ultra-menu li.is-mega > .sub-menu {
         position: static;
         width: 100%;
-        min-width: 0;
         box-shadow: none;
         visibility: visible;
         opacity: 1;
         transform: none;
         display: block;
         padding: 0.25rem 0 0.75rem 1rem;
-    }
-
-    .ultra-menu > li.is-mega > .sub-menu > li {
-        border-right: 0;
-        padding-right: 0;
     }
 }
