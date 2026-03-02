@@ -111,11 +111,26 @@ final class SPEEXX_Mega_Menu_Plugin {
     public static function render(array $args = []): void {
         $defaults = [
             'theme_location' => 'primary',
-            'container'      => false,
+            'container'      => 'nav',
+            'container_class'=> 'speexx-primary-nav',
             'menu_class'     => 'speexx-primary-menu',
             'fallback_cb'    => false,
             'walker'         => apply_filters('speexx_mega_menu_walker', null),
         ];
+
+        if (!isset($args['items_wrap'])) {
+            $custom_logo_id = get_theme_mod('custom_logo');
+            $logo = $custom_logo_id ? wp_get_attachment_image($custom_logo_id, 'full', false, ['class' => 'speexx-site-logo']) : '';
+
+            if (!$logo) {
+                $logo = '<span class="speexx-site-name">' . esc_html(get_bloginfo('name')) . '</span>';
+            }
+
+            $home_url = esc_url(home_url('/'));
+            $logo_item = '<li class="menu-item speexx-site-brand"><a class="menu-link" href="' . $home_url . '">' . $logo . '</a></li>';
+
+            $defaults['items_wrap'] = '<ul id="%1$s" class="%2$s">' . $logo_item . '%3$s</ul>';
+        }
 
         wp_nav_menu(array_merge($defaults, $args));
     }

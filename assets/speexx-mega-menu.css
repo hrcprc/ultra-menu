@@ -1,10 +1,44 @@
+.speexx-primary-nav {
+  background: #000;
+}
+
+.speexx-primary-nav .speexx-primary-menu {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .speexx-primary-menu {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 1rem;
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+.speexx-primary-menu .menu-link {
+  color: #fff;
+  text-decoration: none;
+}
+
+.speexx-site-brand {
+  margin-right: auto;
+}
+
+.speexx-site-brand > .menu-link {
+  min-height: 56px;
+}
+
+.speexx-site-logo {
+  display: block;
+  max-height: 36px;
+  width: auto;
+}
+
+.speexx-site-name {
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #fff;
 }
 
 .speexx-primary-menu > li {
