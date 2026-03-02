@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Speexaax Mega Menu (Avada-free)
  * Description: Adds a simple mega menu option to WordPress menus and provides a walker + CSS to render it without Avada.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Speexx
  */
 
@@ -17,10 +17,13 @@ add_filter('nav_menu_item_title', function ($title, $item, $args, $depth) {
 
 final class SPEEXX_Mega_Menu_Plugin {
     const META_KEY = '_speexx_is_mega';
+    const META_DESCRIPTION_KEY = '_speexx_mega_item_content';
+    const META_IMAGE_ID_KEY = '_speexx_mega_item_image_id';
 
     public static function init(): void {
         add_action('wp_nav_menu_item_custom_fields', [__CLASS__, 'add_menu_item_field'], 10, 4);
         add_action('wp_update_nav_menu_item', [__CLASS__, 'save_menu_item_field'], 10, 2);
+        add_action('admin_enqueue_scripts', [__CLASS__, 'enqueue_admin_assets']);
 
         add_filter('nav_menu_css_class', [__CLASS__, 'add_mega_class'], 10, 4);
 
@@ -41,19 +44,59 @@ final class SPEEXX_Mega_Menu_Plugin {
     }
 
     public static function add_menu_item_field(int $item_id, $item, int $depth, $args): void {
-        if ($depth !== 0) return;
+        if ($depth === 0) {
+            $value = get_post_meta($item_id, self::META_KEY, true);
+            ?>
+            <p class="description description-wide">
+                <label>
+                    <input type="checkbox"
+                           name="menu-item-speexx-is-mega[<?php echo esc_attr($item_id); ?>]"
+                           value="1"
+                        <?php checked($value, '1'); ?> />
+                    <?php esc_html_e('Enable Mega Menu for this item', 'speexx-mega-menu'); ?>
+                </label>
+            </p>
+            <?php
+        }
 
-        $value = get_post_meta($item_id, self::META_KEY, true);
+        if ($depth !== 1) {
+            return;
+        }
+
+        $content = (string) get_post_meta($item_id, self::META_DESCRIPTION_KEY, true);
+        $image_id = (int) get_post_meta($item_id, self::META_IMAGE_ID_KEY, true);
+        $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'medium') : '';
+
         ?>
-        <p class="description description-wide">
-            <label>
-                <input type="checkbox"
-                       name="menu-item-speexx-is-mega[<?php echo esc_attr($item_id); ?>]"
-                       value="1"
-                    <?php checked($value, '1'); ?> />
-                <?php esc_html_e('Enable Mega Menu for this item', 'speexx-mega-menu'); ?>
-            </label>
-        </p>
+        <div class="description description-wide speexx-mega-item-editor-wrap">
+            <p><strong><?php esc_html_e('Mega Menu Content', 'speexx-mega-menu'); ?></strong></p>
+            <p class="howto"><?php esc_html_e('Used in the right panel when this submenu item is hovered/focused.', 'speexx-mega-menu'); ?></p>
+            <?php
+            wp_editor(
+                $content,
+                'speexx-mega-item-content-' . $item_id,
+                [
+                    'textarea_name' => 'menu-item-speexx-mega-content[' . $item_id . ']',
+                    'textarea_rows' => 6,
+                    'teeny' => true,
+                    'media_buttons' => false,
+                    'quicktags' => true,
+                ]
+            );
+            ?>
+            <p style="margin-top:10px;"><strong><?php esc_html_e('Mega Menu Image', 'speexx-mega-menu'); ?></strong></p>
+            <input type="hidden"
+                   class="speexx-mega-image-id"
+                   name="menu-item-speexx-mega-image-id[<?php echo esc_attr($item_id); ?>]"
+                   value="<?php echo esc_attr((string) $image_id); ?>" />
+            <div class="speexx-mega-image-preview" style="margin:6px 0;">
+                <?php if ($image_url) : ?>
+                    <img src="<?php echo esc_url($image_url); ?>" alt="" style="max-width:200px;height:auto;display:block;" />
+                <?php endif; ?>
+            </div>
+            <button type="button" class="button speexx-mega-upload-image"><?php esc_html_e('Choose image', 'speexx-mega-menu'); ?></button>
+            <button type="button" class="button speexx-mega-remove-image"><?php esc_html_e('Remove image', 'speexx-mega-menu'); ?></button>
+        </div>
         <?php
     }
 
@@ -65,6 +108,39 @@ final class SPEEXX_Mega_Menu_Plugin {
         } else {
             delete_post_meta($menu_item_db_id, self::META_KEY);
         }
+
+        $content = $_POST['menu-item-speexx-mega-content'][$menu_item_db_id] ?? '';
+        $content = is_string($content) ? wp_kses_post($content) : '';
+        if ($content !== '') {
+            update_post_meta($menu_item_db_id, self::META_DESCRIPTION_KEY, $content);
+        } else {
+            delete_post_meta($menu_item_db_id, self::META_DESCRIPTION_KEY);
+        }
+
+        $image_id = isset($_POST['menu-item-speexx-mega-image-id'][$menu_item_db_id])
+            ? absint($_POST['menu-item-speexx-mega-image-id'][$menu_item_db_id])
+            : 0;
+
+        if ($image_id > 0) {
+            update_post_meta($menu_item_db_id, self::META_IMAGE_ID_KEY, $image_id);
+        } else {
+            delete_post_meta($menu_item_db_id, self::META_IMAGE_ID_KEY);
+        }
+    }
+
+    public static function enqueue_admin_assets(string $hook): void {
+        if ($hook !== 'nav-menus.php') {
+            return;
+        }
+
+        wp_enqueue_media();
+        wp_enqueue_script(
+            'speexx-mega-menu-admin',
+            plugins_url('assets/speexx-mega-menu-admin.js', __FILE__),
+            ['jquery'],
+            '1.2.0',
+            true
+        );
     }
 
     public static function add_mega_class(array $classes, $item, $args, $depth): array {
@@ -92,14 +168,14 @@ final class SPEEXX_Mega_Menu_Plugin {
             'speexx-mega-menu',
             plugins_url('assets/speexx-mega-menu.css', __FILE__),
             [],
-            '1.1.0'
+            '1.2.0'
         );
 
         wp_enqueue_script(
             'speexx-mega-menu',
             plugins_url('assets/speexx-mega-menu.js', __FILE__),
             [],
-            '1.1.0',
+            '1.2.0',
             true
         );
     }
@@ -190,7 +266,15 @@ class SPEEXX_Mega_Menu_Walker extends Walker_Nav_Menu {
         ];
 
         if ($depth === 1 && !empty($this->mega_branch_stack[0])) {
-            $atts['data-mega-description'] = wp_strip_all_tags((string) $item->description);
+            $legacy_description = wp_strip_all_tags((string) $item->description);
+            $custom_content = (string) get_post_meta($item->ID, SPEEXX_Mega_Menu_Plugin::META_DESCRIPTION_KEY, true);
+            $content = $custom_content !== '' ? $custom_content : wpautop(esc_html($legacy_description));
+
+            $image_id = (int) get_post_meta($item->ID, SPEEXX_Mega_Menu_Plugin::META_IMAGE_ID_KEY, true);
+            $image_url = $image_id ? wp_get_attachment_image_url($image_id, 'large') : '';
+
+            $atts['data-mega-description-html'] = wp_kses_post($content);
+            $atts['data-mega-image'] = $image_url ?: '';
         }
 
         $atts = apply_filters('nav_menu_link_attributes', $atts, $item, $args, $depth);

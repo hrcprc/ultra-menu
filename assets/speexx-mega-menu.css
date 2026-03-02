@@ -60,10 +60,12 @@
   left: 0;
   right: 0;
   top: 100%;
+  width: 100%;
   z-index: 99;
-  background: #fff;
-  border-top: 1px solid #ececec;
-  border-bottom: 1px solid #ececec;
+  background: #000;
+  color: #fff;
+  border-top: 1px solid #2c2c2c;
+  border-bottom: 1px solid #2c2c2c;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08);
   min-height: 500px;
   display: none;
@@ -86,7 +88,7 @@
   list-style: none;
   margin: 0;
   padding: 1.5rem 0;
-  border-right: 1px solid #ececec;
+  border-right: 1px solid #2c2c2c;
 }
 
 .speexx-mega-products > li > .menu-link {
@@ -99,11 +101,18 @@
 .speexx-mega-products > li > .menu-link:hover,
 .speexx-mega-products > li > .menu-link:focus,
 .speexx-mega-products > li > .menu-link.is-active {
-  background: #f6f8fb;
+  background: #1d1d1d;
 }
 
 .speexx-mega-description {
   padding: 2rem;
+}
+
+.speexx-mega-description,
+.speexx-mega-description a,
+.speexx-mega-description h3,
+.speexx-mega-description p {
+  color: #fff;
 }
 
 .speexx-mega-description h3 {
@@ -113,4 +122,11 @@
 .speexx-mega-description p {
   margin: 0;
   line-height: 1.5;
+}
+
+.speexx-mega-description__image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 0 1.25rem;
 }
