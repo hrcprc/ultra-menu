@@ -13,18 +13,30 @@
     link.classList.add('is-active');
 
     const title = link.textContent.trim();
-    const description = link.getAttribute('data-mega-description') || '';
+    const descriptionHtml = link.getAttribute('data-mega-description-html') || '';
+    const imageUrl = link.getAttribute('data-mega-image') || '';
 
     descriptionBox.textContent = '';
+
+    if (imageUrl) {
+      const image = document.createElement('img');
+      image.src = imageUrl;
+      image.alt = title;
+      image.className = 'speexx-mega-description__image';
+      descriptionBox.appendChild(image);
+    }
 
     const heading = document.createElement('h3');
     heading.textContent = title;
 
-    const paragraph = document.createElement('p');
-    paragraph.textContent = description;
-
     descriptionBox.appendChild(heading);
-    descriptionBox.appendChild(paragraph);
+
+    if (descriptionHtml) {
+      const content = document.createElement('div');
+      content.className = 'speexx-mega-description__content';
+      content.innerHTML = descriptionHtml;
+      descriptionBox.appendChild(content);
+    }
   }
 
   function bindMegaMenus() {
