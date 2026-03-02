@@ -2,18 +2,19 @@
 /**
  * Plugin Name: Speexx Mega Menu (Avada-free)
  * Description: Adds a simple mega menu option to WordPress menus and provides a walker + CSS to render it without Avada.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Speexx
  */
 
 if (!defined('ABSPATH')) exit;
+
 add_filter('nav_menu_item_title', function ($title, $item, $args, $depth) {
-    // Remove Astra dropdown toggle markup if present in title string
     $title = preg_replace('/<span[^>]*class="[^"]*dropdown-menu-toggle[^"]*"[^>]*>.*?<\/span>/i', '', $title);
     $title = preg_replace('/&lt;span[^&]*dropdown-menu-toggle.*?&gt;.*?&lt;\/span&gt;/i', '', $title);
 
     return $title;
 }, 999, 4);
+
 final class SPEEXX_Mega_Menu_Plugin {
     const META_KEY = '_speexx_is_mega';
 
@@ -30,8 +31,9 @@ final class SPEEXX_Mega_Menu_Plugin {
     }
 
     public static function register_menu_location(): void {
-        $enabled = apply_filters('speexx_mega_menu_register_location', true);
-        if (!$enabled) return;
+        if (!apply_filters('speexx_mega_menu_register_location', true)) {
+            return;
+        }
 
         register_nav_menus([
             'primary' => __('Primary Menu', 'speexx-mega-menu'),
@@ -72,10 +74,9 @@ final class SPEEXX_Mega_Menu_Plugin {
             return $classes;
         }
 
-        if ((int)$depth !== 0) return $classes;
+        if ((int) $depth !== 0) return $classes;
 
-        $is_mega = get_post_meta($item->ID, self::META_KEY, true);
-        if ($is_mega === '1') {
+        if (get_post_meta($item->ID, self::META_KEY, true) === '1') {
             $classes[] = 'is-mega';
         }
 
@@ -83,22 +84,28 @@ final class SPEEXX_Mega_Menu_Plugin {
     }
 
     public static function enqueue_assets(): void {
-        $enabled = apply_filters('speexx_mega_menu_enqueue_css', true);
-        if (!$enabled) return;
+        if (!apply_filters('speexx_mega_menu_enqueue_css', true)) {
+            return;
+        }
 
-        wp_register_style(
+        wp_enqueue_style(
             'speexx-mega-menu',
             plugins_url('assets/speexx-mega-menu.css', __FILE__),
             [],
-            '1.0.0'
+            '1.1.0'
         );
 
-        wp_enqueue_style('speexx-mega-menu');
+        wp_enqueue_script(
+            'speexx-mega-menu',
+            plugins_url('assets/speexx-mega-menu.js', __FILE__),
+            [],
+            '1.1.0',
+            true
+        );
     }
 
     public static function default_walker($walker) {
-        if ($walker) return $walker;
-        return new SPEEXX_Mega_Menu_Walker();
+        return $walker ?: new SPEEXX_Mega_Menu_Walker();
     }
 
     public static function render(array $args = []): void {
@@ -110,32 +117,66 @@ final class SPEEXX_Mega_Menu_Plugin {
             'walker'         => apply_filters('speexx_mega_menu_walker', null),
         ];
 
-        $args = array_merge($defaults, $args);
-        wp_nav_menu($args);
+        wp_nav_menu(array_merge($defaults, $args));
     }
 }
 
 class SPEEXX_Mega_Menu_Walker extends Walker_Nav_Menu {
 
+    private array $mega_branch_stack = [];
+
     public function start_lvl(&$output, $depth = 0, $args = null): void {
         $indent = str_repeat("\t", $depth);
+        $is_mega_branch = !empty($this->mega_branch_stack[$depth]);
+
+        if ($depth === 0 && $is_mega_branch) {
+            $output .= "\n$indent<div class=\"sub-menu speexx-mega-sub-menu\">\n";
+            $output .= "$indent\t<div class=\"speexx-mega-panel__inner\">\n";
+            $output .= "$indent\t\t<ul class=\"speexx-mega-products\">\n";
+            return;
+        }
+
         $output .= "\n$indent<ul class=\"sub-menu\">\n";
     }
 
-    public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0): void {
-        $indent = ($depth) ? str_repeat("\t", $depth) : '';
+    public function end_lvl(&$output, $depth = 0, $args = null): void {
+        $indent = str_repeat("\t", $depth);
+        $is_mega_branch = !empty($this->mega_branch_stack[$depth]);
 
-        // IMPORTANT: apply WP core filters so nav_menu_css_class works
+        if ($depth === 0 && $is_mega_branch) {
+            $output .= "$indent\t\t</ul>\n";
+            $output .= "$indent\t\t<div class=\"speexx-mega-description\" aria-live=\"polite\"></div>\n";
+            $output .= "$indent\t</div>\n";
+            $output .= "$indent</div>\n";
+            return;
+        }
+
+        $output .= "$indent</ul>\n";
+    }
+
+    public function start_el(&$output, $item, $depth = 0, $args = null, $id = 0): void {
+        $indent = $depth ? str_repeat("\t", $depth) : '';
+
         $classes = empty($item->classes) ? [] : (array) $item->classes;
         $classes = apply_filters('nav_menu_css_class', array_filter($classes), $item, $args, $depth);
+
+        $is_mega_item = $depth === 0 && in_array('is-mega', $classes, true);
+        if ($depth === 0) {
+            $this->mega_branch_stack[0] = $is_mega_item;
+        }
 
         $class_names = $classes ? ' class="' . esc_attr(implode(' ', $classes)) . '"' : '';
 
         $output .= $indent . '<li' . $class_names . '>';
 
-        $atts = [];
-        $atts['href']  = !empty($item->url) ? $item->url : '';
-        $atts['class'] = 'menu-link';
+        $atts = [
+            'href'  => !empty($item->url) ? $item->url : '',
+            'class' => 'menu-link',
+        ];
+
+        if ($depth === 1 && !empty($this->mega_branch_stack[0])) {
+            $atts['data-mega-description'] = wp_strip_all_tags((string) $item->description);
+        }
 
         $atts = apply_filters('nav_menu_link_attributes', $atts, $item, $args, $depth);
 
@@ -151,14 +192,16 @@ class SPEEXX_Mega_Menu_Walker extends Walker_Nav_Menu {
 
         $output .= '<a' . $attributes . '>' . esc_html($title) . '</a>';
     }
+
     public function end_el(&$output, $item, $depth = 0, $args = null): void {
         $output .= "</li>\n";
+
+        if ($depth === 0) {
+            unset($this->mega_branch_stack[0]);
+        }
     }
 }
 
-/**
- * Template helper
- */
 function speexx_mega_menu(array $args = []): void {
     SPEEXX_Mega_Menu_Plugin::render($args);
 }
